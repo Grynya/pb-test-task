@@ -1,5 +1,4 @@
 USE testTaskPb;
-
 CREATE PROCEDURE employeesVacationDurationByDate(IN userLogin nchar(36), IN inputDate date, OUT vacationDuration INT)
 BEGIN
     DECLARE done INT DEFAULT FALSE;
@@ -18,13 +17,14 @@ BEGIN
     loop_name:
     LOOP
         IF inputDate BETWEEN curDTS AND curDTE THEN
+            #vacation period found
             SET holidayFound = true;
-            #count number of work days for this period
+            #count the number of working days for this period
             CALL countNumberOfWorkDays(curDTS, curDTE, userLogin, @nWorkDays0);
             SET vacationDuration = vacationDuration + @nWorkDays0;
 
             IF prevDTS AND prevDTE IS NOT NULL THEN
-                #if prev vacation should be counted too count it too
+                #if the previous vacation should also be counted, count it too
                 CALL countNumberOfWorkDays(prevDTE + INTERVAL 1 DAY, curDTS - INTERVAL 1 DAY, userLogin, @nWorkDays);
                 IF @nWorkDays = 0 THEN
                     CALL countNumberOfWorkDays(prevDTS, prevDTE, userLogin, @nWorkDays);
@@ -32,7 +32,7 @@ BEGIN
                 END IF;
             END IF;
         ELSEIF holidayFound THEN
-            #count number of work days for next after holiday period if it should be counted
+            #count the number of working days in the period following the vacation, if it should be taken into account
             CALL countNumberOfWorkDays(prevDTE + INTERVAL 1 DAY, curDTS - INTERVAL 1 DAY, userLogin, @nWorkDays);
             IF @nWorkDays = 0 THEN
                 CALL countNumberOfWorkDays(curDTS, curDTE, userLogin, @nWorkDays);
@@ -65,5 +65,5 @@ BEGIN
     SET nWorkDays = CHAR_LENGTH(REPLACE(REPLACE(userSchedule, 'H', ''), 'W', ''));
 END;
 
-CALL employeesVacationDurationByDate('user5678', '2023-03-15', @vacationDuration);
+CALL employeesVacationDurationByDate('user1234', '2023-02-09', @vacationDuration);
 SELECT @vacationDuration;
