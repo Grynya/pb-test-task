@@ -1,9 +1,6 @@
 package org.pbtesttask;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -12,12 +9,15 @@ public class App {
     private static List<String> longestResultChain = new LinkedList<>();
 
     public static void main(String[] args) {
-        readFileAndBuildLongestChain("cities.txt");
-
-        System.out.println(String.join(" ", longestResultChain));
+        try {
+            readFileAndBuildLongestChain("cities.txt");
+            System.out.println(String.join(" ", longestResultChain));
+        } catch (IOException e){
+            System.err.println(e.getMessage());
+        }
     }
 
-    public static void readFileAndBuildLongestChain(String fileName) {
+    public static void readFileAndBuildLongestChain(String fileName) throws IOException {
         try (InputStream is = App.class.getClassLoader().getResourceAsStream(fileName)) {
             if (Objects.nonNull(is)) {
                 BufferedReader reader =
@@ -28,10 +28,8 @@ public class App {
                             findLongestChain(new LinkedList<>(List.of(city)), city.charAt(city.length() - 1))
                         ));
             } else {
-                throw new RuntimeException("Unable to read file " + fileName);
+                throw new FileNotFoundException("File not found or cannot be read: " + fileName);
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Error processing file " + fileName, e);
         }
     }
 
@@ -45,13 +43,13 @@ public class App {
         }
     }
 
-    private static void findLongestChain(List<String> currentChain, char lastChar) {
+    private static void findLongestChain(List<String> currentChain, char currentLastLetter) {
         if (currentChain.size() > longestResultChain.size()) {
             longestResultChain = new LinkedList<>(currentChain);
         }
-        if (worldsStartingFrom.containsKey(lastChar)) {
+        if (worldsStartingFrom.containsKey(currentLastLetter)) {
             worldsStartingFrom
-                    .get(lastChar)
+                    .get(currentLastLetter)
                     .stream()
                     .filter(cityByLetter -> !currentChain.contains(cityByLetter))
                     .forEach(cityByLetter -> {
